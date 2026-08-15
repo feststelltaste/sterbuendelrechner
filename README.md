@@ -9,17 +9,13 @@ Service Worker und zwei Icon-Dateien hinzu.
 
 ## Funktionen
 
-- **Volumenberechnung** je Bündel anhand von Innendurchmesser des
-  Gestells und Scheitlänge:
-  - **Ster / Raummeter (RM)** – geometrisches (komprimiertes) Volumen des
-    Gestells sowie das lose gestapelte Äquivalent inkl. Kompressionsfaktor
+- **Volumenberechnung** je Bündel anhand von gemessenem Innendurchmesser des
+  Gestells und Scheitlänge – die App berechnet daraus das entsprechende
+  äquivalente Ster-Volumen:
+  - **Ster / Raummeter (RM)** – geometrisches Volumen des Gestells
+    (Zylinder aus Innendurchmesser × Scheitlänge)
   - **Schüttraummeter (SRM)** – Ster × 1,45 (Aufmaß für lose geschüttetes Holz)
   - **Festmeter (FM)** – Ster × 0,70 (reines Holzvolumen ohne Zwischenräume)
-- **Kompressionsfaktor** (0–10 %, Standard 5 %): Ein Bündel ist enger
-  gepackt als lose gestapeltes Scheitholz und enthält dadurch mehr Holz,
-  als das geometrische Volumen des Gestells vermuten lässt – der Faktor
-  gibt an, wie viel mehr Ster das lose gestapelt wären, und erhöht das
-  für Menge und Preis angesetzte Volumen entsprechend
 - **Holzart-Auswahl** (Buche, Eiche, Fichte oder freier Text) mit
   hinterlegten Standard-Holzpreisen je Ster, die sich automatisch setzen,
   solange der Preis nicht von Hand geändert wurde
@@ -30,14 +26,15 @@ Service Worker und zwei Icon-Dateien hinzu.
   - Spanngurte pro Bündel inkl. Preis je Gurt – per Umschalter auch
     komplett ohne Spanngurte kalkulierbar
   - Gesamtpreis je Posten (Holz + Gurte)
-- **Presets** für gängige Gestellgrößen (0,25 / 0,5 / 0,75 / 1,0 Ster) und
-  Scheitlängen (25 / 33 / 50 / 100 cm)
+- **Presets** für gängige Gestellgrößen (0,25 / 0,5 / 0,75 / 1,0 Ster – die
+  Innendurchmesser sind so gewählt, dass das berechnete Ster-Volumen exakt
+  dem jeweiligen Label entspricht) und Scheitlängen (25 / 33 / 50 / 100 cm)
 - **Live-Vorschau** als SVG-Grafik des gepackten Bündels inkl. Spanngurten,
   die sich automatisch an Gurtanzahl und -umschalter anpasst, sowie eine
-  aufklappbare **Zusammenfassung** der Ergebniswerte (Ster, Kompressionsfaktor,
-  SRM, FM, Gurte, Gesamtpreis) – am Desktop standardmäßig aufgeklappt, auf
-  Tablet/Smartphone platzsparend eingeklappt und jederzeit per Klick auf
-  „Zusammenfassung“ ein-/ausblendbar
+  aufklappbare **Zusammenfassung** der Ergebniswerte (Ster, SRM, FM, Gurte,
+  Gesamtpreis) – am Desktop standardmäßig aufgeklappt, auf Tablet/Smartphone
+  platzsparend eingeklappt und jederzeit per Klick auf „Zusammenfassung“
+  ein-/ausblendbar
 - **Responsives Layout**, optimiert für Smartphone, Tablet/11-Zoll-Notebook
   sowie große Desktop-Monitore (FullHD/QHD)
 - **Polterliste**: mehrere Bündel-Posten mit unterschiedlichen Maßen,
@@ -61,36 +58,31 @@ Service Worker und zwei Icon-Dateien hinzu.
 2. Bezeichnung ggf. individuell anpassen, Holzart wählen, Innendurchmesser
    und Scheitlänge über Slider/Eingabefeld oder per Preset-Buttons
    einstellen.
-3. Bei Bedarf den Kompressionsfaktor anpassen (Standard: 5 %).
-4. Anzahl der Bündel, Holzpreis pro Ster (wird je nach Holzart
+3. Anzahl der Bündel, Holzpreis pro Ster (wird je nach Holzart
    vorbelegt) sowie – falls verwendet – Anzahl und Preis der Spanngurte
    eintragen.
-5. Ergebnis (Ster, SRM, FM, Gurte, Gesamtpreis) wird live berechnet.
-6. Mit **„+ Zur Messungsliste hinzufügen“** den aktuellen Posten in die
+4. Ergebnis (Ster, SRM, FM, Gurte, Gesamtpreis) wird live berechnet.
+5. Mit **„+ Zur Messungsliste hinzufügen“** den aktuellen Posten in die
    Polterliste übernehmen – dort werden alle Posten summiert.
-7. Über ✎ einzelne Posten zur Bearbeitung zurück ins Formular laden, über
+6. Über ✎ einzelne Posten zur Bearbeitung zurück ins Formular laden, über
    ✕ entfernen oder über **„Liste leeren“** die gesamte Polterliste
    zurücksetzen.
-8. Mit **„📄 Als PDF exportieren“** die Stückliste als PDF sichern
+7. Mit **„📄 Als PDF exportieren“** die Stückliste als PDF sichern
    (Browser-Druckdialog, Ziel „Als PDF speichern“).
 
 ## Berechnungsgrundlage
 
-Das geometrische Volumen eines Bündels wird als Zylinder aus
-Innendurchmesser $d$ und Scheitlänge $L$ berechnet:
+Das Ster-Volumen eines Bündels wird direkt aus dem gemessenen
+Innendurchmesser $d$ und der Scheitlänge $L$ des Gestells als Zylinder
+berechnet:
 
 $$
-\text{Ster}_{\text{geometrisch}} = \frac{\pi \cdot d^2}{4} \cdot L
+\text{Ster} = \frac{\pi \cdot d^2}{4} \cdot L
 $$
 
-Da ein Bündel enger gepackt ist als lose gestapeltes Scheitholz, wird für
-Mengen- und Preisberechnung zusätzlich der Kompressionsfaktor $k$
-(0–10 %, Standard 5 %) angesetzt – er gibt an, wie viel Ster das im
-Bündel enthaltene Holz lose gestapelt zusätzlich einnehmen würde:
-
-$$
-\text{Ster} = \text{Ster}_{\text{geometrisch}} \cdot \left(1 + \frac{k}{100}\right)
-$$
+Die Presets sind so kalibriert, dass diese Formel für ihren jeweiligen
+Innendurchmesser exakt den im Label genannten Ster-Wert ergibt (z. B.
+Ø 98 cm bei 100 cm Scheitlänge → exakt 0,75 Ster).
 
 Die Faktoren für Schüttraummeter (× 1,45) und Festmeter (× 0,70) sind
 gängige Näherungswerte für dicht gepacktes Scheitholz mit einem geringen

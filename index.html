@@ -68,74 +68,16 @@
       max-width: 1100px;
       margin: 0 auto;
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      /* minmax(0, 1fr) statt 1fr: Grid-Spalten dürfen sonst nicht schmaler
+         werden als der Mindestinhalt ihres größten Kindelements (hier: die
+         breite Polterliste-Tabelle) und ziehen sonst die ganze Seite in die
+         Breite statt nur die Tabelle intern scrollen zu lassen. */
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 20px;
     }
 
-    /* Größere Displays (z. B. FullHD-Monitor): mehr Breite nutzen statt Leerraum */
-    @media (min-width: 1600px) {
-      .container { max-width: 1300px; }
-    }
-
-    /* QHD und größer: nochmals mehr Breite plus etwas größere Grundschrift */
-    @media (min-width: 2200px) {
-      html { font-size: 18px; }
-      .container { max-width: 1500px; }
-    }
-
-    /* Tablet / kleine Laptops (z. B. 11 Zoll): einspaltig, aber noch großzügig */
-    @media (max-width: 900px) {
-      .container {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* Smartphones: Bedienelemente verkleinern und stapeln */
-    @media (max-width: 480px) {
-      body { padding: 12px; }
-
-      .container { gap: 14px; margin-top: 44px; }
-
-      .card { padding: 14px; }
-
-      h1 { font-size: 1.25rem; }
-
-      h2 { font-size: 1.05rem; }
-
-      .input-row {
-        flex-wrap: wrap;
-      }
-
-      .input-row input[type="number"] {
-        width: 80px !important;
-      }
-
-      .btn-chip {
-        padding: 6px 10px;
-        font-size: 0.8rem;
-      }
-
-      .results-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .theme-toggle {
-        top: 8px;
-        right: 8px;
-        padding: 5px 10px;
-        font-size: 0.8rem;
-      }
-
-      table {
-        font-size: 0.78rem;
-      }
-
-      th, td {
-        padding: 6px;
-      }
-    }
-
     .card {
+      min-width: 0;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
@@ -375,13 +317,18 @@
       background: var(--chip-bg);
     }
 
+    /* Kopfzeile der ersten Karte: Titel links, Hell-/Dunkel-Schalter rechts oben */
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .theme-toggle {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 50;
-      background: var(--card-bg);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      flex-shrink: 0;
+      background: var(--chip-bg);
     }
 
     /* Nur beim Drucken/PDF-Export sichtbar */
@@ -447,17 +394,82 @@
         color: #000000 !important;
       }
     }
+
+    /* --- Responsive-Anpassungen (bewusst ganz am Ende: müssen bei gleicher
+       Spezifität die vorherigen Basis-Regeln überschreiben können) --- */
+
+    /* Größere Displays (z. B. FullHD-Monitor): mehr Breite nutzen statt Leerraum */
+    @media (min-width: 1600px) {
+      .container { max-width: 1300px; }
+    }
+
+    /* QHD und größer: nochmals mehr Breite plus etwas größere Grundschrift */
+    @media (min-width: 2200px) {
+      html { font-size: 18px; }
+      .container { max-width: 1500px; }
+    }
+
+    /* Tablet / kleine Laptops (z. B. 11 Zoll): einspaltig, aber noch großzügig */
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    /* Smartphones: Bedienelemente verkleinern und stapeln */
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+
+      .container { gap: 14px; }
+
+      .card { padding: 14px; }
+
+      h1 { font-size: 1.25rem; }
+
+      h2 { font-size: 1.05rem; }
+
+      .input-row {
+        flex-wrap: wrap;
+      }
+
+      .input-row input[type="number"] {
+        width: 80px !important;
+      }
+
+      .btn-chip {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .theme-toggle {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+      }
+
+      table {
+        font-size: 0.78rem;
+      }
+
+      th, td {
+        padding: 6px;
+      }
+    }
   </style>
 </head>
 <body>
-
-<button type="button" id="themeToggle" class="btn-secondary theme-toggle no-print" onclick="toggleTheme()">🌙 Dunkel</button>
 
 <div class="container">
 
   <!-- Formular -->
   <div class="card no-print">
-    <h1>🪵 Sterbündelrechner</h1>
+    <div class="card-header-row">
+      <h1>🪵 Sterbündelrechner</h1>
+      <button type="button" id="themeToggle" class="btn-secondary theme-toggle no-print" onclick="toggleTheme()">🌙 Dunkel</button>
+    </div>
     <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
       Volumen, Preise und Spanngurtkalkulation für Bündelgestelle
     </p>
@@ -489,13 +501,13 @@
     <div class="form-group">
       <label>Innendurchmesser Gestell (⌀ in cm)</label>
       <div class="input-row">
-        <input type="range" id="diaRange" min="40" max="180" step="1" value="100">
-        <input type="number" id="diaInput" min="40" max="250" value="100" style="width: 90px;">
+        <input type="range" id="diaRange" min="40" max="180" step="1" value="98">
+        <input type="number" id="diaInput" min="40" max="250" value="98" style="width: 90px;">
       </div>
       <div class="btn-group">
         <button type="button" class="btn-chip" onclick="setPreset(80, 100, this)">0,5 Ster (Ø 80cm, 1m)</button>
-        <button type="button" class="btn-chip active" onclick="setPreset(100, 100, this)">0,75 Ster (Ø 100cm, 1m)</button>
-        <button type="button" class="btn-chip" onclick="setPreset(116, 100, this)">1,0 Ster (Ø 116cm, 1m)</button>
+        <button type="button" class="btn-chip active" onclick="setPreset(98, 100, this)">0,75 Ster (Ø 98cm, 1m)</button>
+        <button type="button" class="btn-chip" onclick="setPreset(113, 100, this)">1,0 Ster (Ø 113cm, 1m)</button>
         <button type="button" class="btn-chip" onclick="setPreset(80, 50, this)">0,25 Ster (Ø 80cm, 0,5m)</button>
       </div>
     </div>
@@ -517,17 +529,6 @@
     </div>
 
     <div class="form-group">
-      <label>Kompressionsfaktor (Bündel ist dichter gepackt als loses Scheitholz)</label>
-      <div class="input-row">
-        <input type="range" id="compRange" min="0" max="10" step="1" value="5">
-        <input type="number" id="compInput" min="0" max="10" step="1" value="5" style="width: 90px;">
-      </div>
-      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
-        0 % = ganz locker geschichtet, 10 % = sehr eng zusammen. Erhöht das für die Preisberechnung angesetzte Volumen.
-      </div>
-    </div>
-
-    <div class="form-group">
       <label>Spanngurte für dieses Bündel</label>
       <div class="btn-group">
         <button type="button" id="strapsOnBtn" class="btn-chip active" onclick="setStrapsEnabled(true)">Mit Spanngurten</button>
@@ -542,7 +543,7 @@
       </div>
       <div>
         <label>Preis je Spanngurt (€)</label>
-        <input type="number" id="priceStrap" min="0" step="0.1" value="1.70">
+        <input type="number" id="priceStrap" min="0" step="0.1" value="2.50">
       </div>
     </div>
 
@@ -560,15 +561,7 @@
       <summary>Zusammenfassung</summary>
       <div class="results-grid">
         <div class="result-item">
-          <div class="result-label">Ster (RM, komprimiert / Gestell)</div>
-          <div class="result-value" id="resSterRaw">1.06 Ster</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Kompressionsfaktor</div>
-          <div class="result-value" id="resComp">5 %</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Ster (RM, lose gestapelt)</div>
+          <div class="result-label">Ster (RM)</div>
           <div class="result-value" id="resSter">1.11 Ster</div>
         </div>
         <div class="result-item">
@@ -616,7 +609,6 @@
             <th>Bezeichnung</th>
             <th>Maße (Ø × L)</th>
             <th>Bündel</th>
-            <th>Kompr.</th>
             <th>Ster (RM)</th>
             <th>SRM</th>
             <th>Gurte</th>
@@ -633,7 +625,6 @@
           <tr>
             <td colspan="3">GESAMTSUMMEN</td>
             <td id="sumBundles">0</td>
-            <td></td>
             <td id="sumSter">0.00</td>
             <td id="sumSrm">0.00</td>
             <td id="sumStraps">0</td>
@@ -664,8 +655,6 @@
   const diaInput = document.getElementById('diaInput');
   const lenInput = document.getElementById('lenInput');
   const qtyInput = document.getElementById('qtyInput');
-  const compRange = document.getElementById('compRange');
-  const compInput = document.getElementById('compInput');
   const priceSter = document.getElementById('priceSter');
   const strapsPerBundle = document.getElementById('strapsPerBundle');
   const priceStrap = document.getElementById('priceStrap');
@@ -681,10 +670,6 @@
   diaInput.addEventListener('input', () => { diaRange.value = diaInput.value; calculateLive(); });
   lenInput.addEventListener('input', calculateLive);
   qtyInput.addEventListener('input', calculateLive);
-
-  // Synchronisation Kompressionsfaktor Slider / Input
-  compRange.addEventListener('input', () => { compInput.value = compRange.value; calculateLive(); });
-  compInput.addEventListener('input', () => { compRange.value = compInput.value; calculateLive(); });
 
   priceSter.addEventListener('input', () => { priceSterManuallyEdited = true; calculateLive(); });
   strapsPerBundle.addEventListener('input', calculateLive);
@@ -764,15 +749,12 @@
     const d = parseFloat(diaInput.value) / 100; // in m
     const l = parseFloat(lenInput.value) / 100; // in m
     const qty = parseInt(qtyInput.value) || 1;
-    const compPct = Math.min(10, Math.max(0, parseFloat(compInput.value) || 0));
     const pSter = parseFloat(priceSter.value) || 0;
     const sCount = strapsEnabled ? (parseInt(strapsPerBundle.value) || 0) : 0;
     const pStrap = parseFloat(priceStrap.value) || 0;
 
-    const singleSter = (Math.PI * Math.pow(d, 2) / 4) * l;
-    const totalSterRaw = singleSter * qty; // rein geometrisches Volumen des Gestells
-    const compressionFactor = 1 + (compPct / 100);
-    const totalSter = totalSterRaw * compressionFactor; // für Menge & Preis angesetztes Volumen (Bündel ist dichter gepackt)
+    const singleSter = (Math.PI * Math.pow(d, 2) / 4) * l; // geometrisches Volumen je Bündel (Zylinder aus Ø und Scheitlänge)
+    const totalSter = singleSter * qty;
     const totalSrm = totalSter * 1.45;
     const totalFm = totalSter * 0.70;
 
@@ -785,9 +767,7 @@
       dCm: diaInput.value,
       lCm: lenInput.value,
       qty,
-      compPct,
       singleSter,
-      totalSterRaw,
       totalSter,
       totalSrm,
       totalFm,
@@ -806,8 +786,6 @@
 
   function calculateLive() {
     const v = getCalculatedValues();
-    document.getElementById('resSterRaw').innerText = `${v.totalSterRaw.toFixed(2)} Ster`;
-    document.getElementById('resComp').innerText = `${v.compPct} %`;
     document.getElementById('resSter').innerText = `${v.totalSter.toFixed(2)} Ster`;
     document.getElementById('resSrm').innerText = `${v.totalSrm.toFixed(2)} SRM`;
     document.getElementById('resFm').innerText = `${v.totalFm.toFixed(2)} FM`;
@@ -849,8 +827,6 @@
     diaRange.value = m.dCm;
     lenInput.value = m.lCm;
     qtyInput.value = m.qty;
-    compInput.value = m.compPct;
-    compRange.value = m.compPct;
     priceSter.value = m.pSter;
     priceSterManuallyEdited = true; // gespeicherten Preis beim Bearbeiten nicht automatisch überschreiben
     strapsPerBundle.value = m.sCount;
@@ -897,7 +873,6 @@
         <td><strong>${m.name}</strong></td>
         <td>Ø ${m.dCm} × ${m.lCm} cm</td>
         <td>${m.qty}</td>
-        <td>${m.compPct}%</td>
         <td>${m.totalSter.toFixed(2)}</td>
         <td>${m.totalSrm.toFixed(2)}</td>
         <td>${m.totalStraps} Stk.</td>
