@@ -1,0 +1,16 @@
+{
+  "name": "Sterbündelrechner",
+  "short_name": "Sterbündel",
+  "description": "Volumen- und Preisrechner für Brennholzbündel in runden Bündelgestellen.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f6f4f1",
+  "theme_color": "#b45309",
+  "lang": "de",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

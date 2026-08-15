@@ -1,16 +1,18 @@
 # 🪵 Sterbündelrechner
 
-Eine kleine, eigenständige Web-App (eine einzelne `index.html`, kein Build,
-keine Abhängigkeiten) zur Berechnung von Volumen und Verkaufspreis von
+Eine kleine, eigenständige Web-App (im Kern eine einzelne `index.html`, kein
+Build, keine Abhängigkeiten) zur Berechnung von Volumen und Verkaufspreis von
 Brennholzbündeln in runden Bündelgestellen – z. B. für den Verkauf mehrerer
-Bündel unterschiedlicher Größe an der Straße oder ab Hof.
+Bündel unterschiedlicher Größe an der Straße oder ab Hof. Für die
+Installierbarkeit als App (siehe unten) kommen noch ein Manifest, ein
+Service Worker und zwei Icon-Dateien hinzu.
 
 ## Funktionen
 
 - **Volumenberechnung** je Bündel anhand von Innendurchmesser des
   Gestells und Scheitlänge:
-  - **Ster / Raummeter (RM)** – geometrisches Volumen sowie ein Wert
-    inklusive Kompressionsfaktor
+  - **Ster / Raummeter (RM)** – geometrisches (komprimiertes) Volumen des
+    Gestells sowie das lose gestapelte Äquivalent inkl. Kompressionsfaktor
   - **Schüttraummeter (SRM)** – Ster × 1,45 (Aufmaß für lose geschüttetes Holz)
   - **Festmeter (FM)** – Ster × 0,70 (reines Holzvolumen ohne Zwischenräume)
 - **Kompressionsfaktor** (0–10 %, Standard 5 %): Ein Bündel ist enger
@@ -31,7 +33,13 @@ Bündel unterschiedlicher Größe an der Straße oder ab Hof.
 - **Presets** für gängige Gestellgrößen (0,25 / 0,5 / 0,75 / 1,0 Ster) und
   Scheitlängen (25 / 33 / 50 / 100 cm)
 - **Live-Vorschau** als SVG-Grafik des gepackten Bündels inkl. Spanngurten,
-  die sich automatisch an Gurtanzahl und -umschalter anpasst
+  die sich automatisch an Gurtanzahl und -umschalter anpasst, sowie eine
+  aufklappbare **Zusammenfassung** der Ergebniswerte (Ster, Kompressionsfaktor,
+  SRM, FM, Gurte, Gesamtpreis) – am Desktop standardmäßig aufgeklappt, auf
+  Tablet/Smartphone platzsparend eingeklappt und jederzeit per Klick auf
+  „Zusammenfassung“ ein-/ausblendbar
+- **Responsives Layout**, optimiert für Smartphone, Tablet/11-Zoll-Notebook
+  sowie große Desktop-Monitore (FullHD/QHD)
 - **Polterliste**: mehrere Bündel-Posten mit unterschiedlichen Maßen,
   Mengen und Preisen erfassen, einzeln bearbeiten (inkl. Wiederherstellung
   von Holzart und Spanngurt-Einstellung) oder löschen und als Gesamtsumme
@@ -40,10 +48,16 @@ Bündel unterschiedlicher Größe an der Straße oder ab Hof.
   Druckdialog des Browsers ("Als PDF speichern")
 - **Heller Modus als Standard** (besser ablesbar bei Tageslicht/im
   Freien), per Schalter oben rechts auf einen dunklen Modus umschaltbar
+- **Installierbar als App (PWA)**: über den Browser (z. B. Chrome auf
+  Android: „Zum Startbildschirm hinzufügen“/„App installieren“) als
+  eigenständige App-Kachel installierbar, inkl. Offline-Nutzung durch
+  einen Service Worker
 
 ## Verwendung
 
-1. `index.html` in einem beliebigen Browser öffnen (kein Server nötig).
+1. `index.html` in einem beliebigen Browser öffnen (kein Server nötig; für
+   die Installation als App muss die Datei allerdings über `http(s)://`
+   ausgeliefert werden, siehe Abschnitt „Technik“).
 2. Bezeichnung ggf. individuell anpassen, Holzart wählen, Innendurchmesser
    und Scheitlänge über Slider/Eingabefeld oder per Preset-Buttons
    einstellen.
@@ -85,7 +99,25 @@ Rundholzanteil (< 10 %).
 ## Technik
 
 Reines HTML/CSS/JavaScript ohne externe Bibliotheken oder Frameworks –
-alles läuft clientseitig im Browser, es werden keine Daten gespeichert
-oder übertragen. Der PDF-Export nutzt die native Druckfunktion des
-Browsers, das Theme wird per CSS-Variablen umgeschaltet und lokal im
+alles läuft clientseitig im Browser, es werden keine Berechnungsdaten
+(Bündelmaße, Polterliste) gespeichert oder übertragen. Der PDF-Export
+nutzt die native Druckfunktion des Browsers, das Theme wird per
+CSS-Variablen umgeschaltet und lediglich die Theme-Einstellung lokal im
 Browser (`localStorage`) gemerkt.
+
+Für die Installierbarkeit als **Progressive Web App** kommen drei weitere,
+ebenfalls abhängigkeitsfreie Dateien hinzu:
+
+- `manifest.webmanifest` – Name, Icons, Start-URL und Darstellung
+  (`display: standalone`) für die Installation
+- `sw.js` – Service Worker, der `index.html`, das Manifest und die Icons
+  cacht (Stale-while-Revalidate) und damit Offline-Nutzung ermöglicht
+- `icons/icon-192.png` und `icons/icon-512.png` – App-Icons (inkl.
+  „maskable“-Sicherheitszone für adaptive Android-Icons)
+
+Da `index.html` diese Dateien relativ zu ihrem eigenen Pfad referenziert,
+muss die App dafür über `http://` oder `https://` (z. B. via
+`python3 -m http.server` oder ein GitHub-Pages-Deployment) ausgeliefert
+werden – Service Worker funktionieren nicht beim direkten Öffnen per
+`file://`. Ohne Server bleibt die App weiterhin per Doppelklick auf
+`index.html` nutzbar, nur eben nicht installierbar.
