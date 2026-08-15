@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sterrechner für Bündel</title>
+  <style>
+    /* Heller Modus (Standard) – besser ablesbar im Freien / bei Tageslicht */
+    :root {
+      --bg: #f6f4f1;
+      --card-bg: #ffffff;
+      --card-border: #e3ddd3;
+      --input-bg: #ffffff;
+      --chip-bg: #f1ede7;
+      --surface: #f1ede7;
+      --preview-bg: #ffffff;
+      --text: #1f2328;
+      --text-muted: #5b6270;
+      --wood-primary: #b45309;
+      --wood-dark: #92400e;
+      --wood-light: #fef3c7;
+      --wood-bark: #451a03;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --success: #16a34a;
+    }
+
+    /* Dunkler Modus – optional über Umschalter */
+    :root[data-theme="dark"] {
+      --bg: #141619;
+      --card-bg: #1e2227;
+      --card-border: #2d333b;
+      --input-bg: #0d1117;
+      --chip-bg: #282e38;
+      --surface: #0d1117;
+      --preview-bg: #0d1117;
+      --text: #f0f3f6;
+      --text-muted: #8b949e;
+      --wood-primary: #d97706;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .full-width {
+      grid-column: 1 / -1;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 5px;
+      color: var(--wood-primary);
+    }
+
+    h2 {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      font-weight: 500;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="number"], input[type="text"], select {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 1rem;
+      width: 100%;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--wood-primary);
+    }
+
+    input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    .btn-chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .btn-chip:hover, .btn-chip.active {
+      background: var(--wood-primary);
+      color: white;
+      border-color: var(--wood-primary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      width: 100%;
+      transition: background 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--danger);
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    /* Visualisierung SVG */
+    .preview-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--preview-bg);
+      border-radius: 8px;
+      padding: 15px;
+      border: 1px solid var(--card-border);
+      min-height: 280px;
+    }
+
+    svg {
+      max-width: 250px;
+      max-height: 250px;
+    }
+
+    /* Result Grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .result-item {
+      background: var(--surface);
+      border: 1px solid var(--card-border);
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .result-item.highlight {
+      grid-column: 1 / -1;
+      border-color: var(--wood-primary);
+      background: rgba(217, 119, 6, 0.1);
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .result-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--text);
+    }
+
+    .result-item.highlight .result-value {
+      color: var(--wood-primary);
+      font-size: 1.4rem;
+    }
+
+    /* Table */
+    .table-responsive {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    tfoot td {
+      font-weight: bold;
+      color: var(--wood-primary);
+      border-top: 2px solid var(--card-border);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-secondary:hover {
+      background: var(--chip-bg);
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 50;
+      background: var(--card-bg);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Nur beim Drucken/PDF-Export sichtbar */
+    .print-header {
+      display: none;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        color: #000000;
+        padding: 0;
+      }
+
+      /* Alles ausblenden außer der Stückliste */
+      body * {
+        visibility: hidden;
+      }
+
+      .full-width, .full-width * {
+        visibility: visible;
+      }
+
+      .full-width {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none;
+        padding: 0;
+      }
+
+      .print-header {
+        display: block;
+        margin-bottom: 16px;
+      }
+
+      .print-header h1 {
+        color: #000000;
+        font-size: 1.3rem;
+      }
+
+      .print-header p {
+        color: #444444;
+        font-size: 0.85rem;
+        margin-top: 4px;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      table, th, td {
+        color: #000000 !important;
+        border-color: #999999 !important;
+      }
+
+      .result-item, td, th, table {
+        background: #ffffff !important;
+      }
+
+      tfoot td {
+        color: #000000 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<button type="button" id="themeToggle" class="btn-secondary theme-toggle no-print" onclick="toggleTheme()">🌙 Dunkel</button>
+
+<div class="container">
+
+  <!-- Formular -->
+  <div class="card no-print">
+    <h1>🪵 Sterbündelrechner</h1>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">
+      Volumen, Preise und Spanngurtkalkulation für Bündelgestelle
+    </p>
+
+    <div class="form-group">
+      <label>Bezeichnung / Notiz</label>
+      <input type="text" id="bundleName" placeholder="z. B. 1 Ster Buche 1m" value="Bündel 1m groß, Fichte 1m lang">
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+        Wird automatisch aus Holzart und Scheitlänge gebildet, solange hier nichts von Hand eingetragen wurde.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Holzart</label>
+      <div class="btn-group">
+        <button type="button" class="btn-chip species-chip" data-species="Buche" onclick="setSpecies('Buche', this)">Buche</button>
+        <button type="button" class="btn-chip species-chip" data-species="Eiche" onclick="setSpecies('Eiche', this)">Eiche</button>
+        <button type="button" class="btn-chip species-chip active" data-species="Fichte" onclick="setSpecies('Fichte', this)">Fichte</button>
+        <button type="button" class="btn-chip species-chip" data-species="custom" onclick="setSpecies('custom', this)">Andere</button>
+      </div>
+      <input type="text" id="speciesCustom" placeholder="eigene Holzart" style="display: none; margin-top: 6px;">
+    </div>
+
+    <div class="form-group">
+      <label>Holzpreis (€ / Ster)</label>
+      <input type="number" id="priceSter" min="0" step="0.5" value="60.00">
+    </div>
+
+    <div class="form-group">
+      <label>Innendurchmesser Gestell (⌀ in cm)</label>
+      <div class="input-row">
+        <input type="range" id="diaRange" min="40" max="180" step="1" value="100">
+        <input type="number" id="diaInput" min="40" max="250" value="100" style="width: 90px;">
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn-chip" onclick="setPreset(80, 100, this)">0,5 Ster (Ø 80cm, 1m)</button>
+        <button type="button" class="btn-chip active" onclick="setPreset(100, 100, this)">0,75 Ster (Ø 100cm, 1m)</button>
+        <button type="button" class="btn-chip" onclick="setPreset(116, 100, this)">1,0 Ster (Ø 116cm, 1m)</button>
+        <button type="button" class="btn-chip" onclick="setPreset(80, 50, this)">0,25 Ster (Ø 80cm, 0,5m)</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Scheitlänge (L in cm)</label>
+      <input type="number" id="lenInput" min="20" max="200" value="100">
+      <div class="btn-group">
+        <button type="button" class="btn-chip" onclick="setLength(25, this)">25 cm</button>
+        <button type="button" class="btn-chip" onclick="setLength(33, this)">33 cm</button>
+        <button type="button" class="btn-chip" onclick="setLength(50, this)">50 cm</button>
+        <button type="button" class="btn-chip active" onclick="setLength(100, this)">100 cm (1 m)</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Anzahl Bündel dieser Größe</label>
+      <input type="number" id="qtyInput" min="1" max="1000" value="1">
+    </div>
+
+    <div class="form-group">
+      <label>Kompressionsfaktor (Bündel ist dichter gepackt als loses Scheitholz)</label>
+      <div class="input-row">
+        <input type="range" id="compRange" min="0" max="10" step="1" value="5">
+        <input type="number" id="compInput" min="0" max="10" step="1" value="5" style="width: 90px;">
+      </div>
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+        0 % = ganz locker geschichtet, 10 % = sehr eng zusammen. Erhöht das für die Preisberechnung angesetzte Volumen.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Spanngurte für dieses Bündel</label>
+      <div class="btn-group">
+        <button type="button" id="strapsOnBtn" class="btn-chip active" onclick="setStrapsEnabled(true)">Mit Spanngurten</button>
+        <button type="button" id="strapsOffBtn" class="btn-chip" onclick="setStrapsEnabled(false)">Ohne Spanngurte</button>
+      </div>
+    </div>
+
+    <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+      <div>
+        <label>Gurte je Bündel</label>
+        <input type="number" id="strapsPerBundle" min="0" max="10" value="2">
+      </div>
+      <div>
+        <label>Preis je Spanngurt (€)</label>
+        <input type="number" id="priceStrap" min="0" step="0.1" value="1.70">
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="addCurrentBundle()">+ Zur Messungsliste hinzufügen</button>
+  </div>
+
+  <!-- Vorschau & Live-Berechnung -->
+  <div class="card">
+    <h2>Vorschau und Einzelkalkulation</h2>
+    
+    <div class="preview-box">
+      <svg id="woodSvg" viewBox="0 0 200 200"></svg>
+    </div>
+
+    <div class="results-grid">
+      <div class="result-item">
+        <div class="result-label">Ster (RM, geometrisch)</div>
+        <div class="result-value" id="resSterRaw">1.06 Ster</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Ster (RM, inkl. Kompression)</div>
+        <div class="result-value" id="resSter">1.11 Ster</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Schüttraummeter (SRM)</div>
+        <div class="result-value" id="resSrm">1.53 SRM</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Festmeter (FM, ~70%)</div>
+        <div class="result-value" id="resFm">0.74 FM</div>
+      </div>
+      <div class="result-item">
+        <div class="result-label">Spanngurte gesamt</div>
+        <div class="result-value" id="resStraps">2 Stk. (3,00 €)</div>
+      </div>
+      <div class="result-item highlight">
+        <div class="result-label">Gesamtpreis Posten (Holz + Gurte)</div>
+        <div class="result-value" id="resTotal">119,60 €</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabelle der Messungen -->
+  <div class="card full-width">
+    <div class="print-header">
+      <h1>🪵 Stückliste & Preisberechnung – Sterbündelrechner</h1>
+      <p id="printDate"></p>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;" class="no-print">
+      <h2>Erfasste Messungen / Polterliste</h2>
+      <div class="btn-group" style="margin-top: 0;">
+        <button class="btn-secondary" onclick="exportPdf()">📄 Als PDF exportieren</button>
+        <button class="btn-danger" onclick="clearList()">Liste leeren</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table id="measurementsTable">
+        <thead>
+          <tr>
+            <th>Pos.</th>
+            <th>Bezeichnung</th>
+            <th>Maße (Ø × L)</th>
+            <th>Bündel</th>
+            <th>Kompr.</th>
+            <th>Ster (RM)</th>
+            <th>SRM</th>
+            <th>Gurte</th>
+            <th>Holz (€)</th>
+            <th>Gurte (€)</th>
+            <th>Gesamt (€)</th>
+            <th class="no-print">Aktion</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Dynamisch befüllt -->
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">GESAMTSUMMEN</td>
+            <td id="sumBundles">0</td>
+            <td></td>
+            <td id="sumSter">0.00</td>
+            <td id="sumSrm">0.00</td>
+            <td id="sumStraps">0</td>
+            <td id="sumWoodCost">0.00 €</td>
+            <td id="sumStrapCost">0.00 €</td>
+            <td id="sumTotalCost">0.00 €</td>
+            <td class="no-print"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let measurements = [];
+  let strapsEnabled = true;
+  let selectedSpecies = 'Fichte';
+  let bundleNameManuallyEdited = false;
+  let priceSterManuallyEdited = false;
+
+  // Standard-Holzpreise je Ster nach Holzart (€) – „Andere“ ändert den Preis nicht automatisch
+  const SPECIES_PRICES = { Buche: 80, Eiche: 90, Fichte: 60 };
+
+  // DOM Elemente
+  const diaRange = document.getElementById('diaRange');
+  const diaInput = document.getElementById('diaInput');
+  const lenInput = document.getElementById('lenInput');
+  const qtyInput = document.getElementById('qtyInput');
+  const compRange = document.getElementById('compRange');
+  const compInput = document.getElementById('compInput');
+  const priceSter = document.getElementById('priceSter');
+  const strapsPerBundle = document.getElementById('strapsPerBundle');
+  const priceStrap = document.getElementById('priceStrap');
+  const bundleName = document.getElementById('bundleName');
+  const speciesCustom = document.getElementById('speciesCustom');
+
+  // Bezeichnung nur automatisch nachführen, solange sie nicht von Hand angepasst wurde
+  bundleName.addEventListener('input', () => { bundleNameManuallyEdited = true; });
+  speciesCustom.addEventListener('input', updateAutoBundleName);
+
+  // Synchronisation Durchmesser Slider / Input
+  diaRange.addEventListener('input', () => { diaInput.value = diaRange.value; calculateLive(); });
+  diaInput.addEventListener('input', () => { diaRange.value = diaInput.value; calculateLive(); });
+  lenInput.addEventListener('input', calculateLive);
+  qtyInput.addEventListener('input', calculateLive);
+
+  // Synchronisation Kompressionsfaktor Slider / Input
+  compRange.addEventListener('input', () => { compInput.value = compRange.value; calculateLive(); });
+  compInput.addEventListener('input', () => { compRange.value = compInput.value; calculateLive(); });
+
+  priceSter.addEventListener('input', () => { priceSterManuallyEdited = true; calculateLive(); });
+  strapsPerBundle.addEventListener('input', calculateLive);
+  priceStrap.addEventListener('input', calculateLive);
+
+  function setLength(val, btn) {
+    lenInput.value = val;
+    if (btn) {
+      btn.parentElement.querySelectorAll('.btn-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    calculateLive();
+  }
+
+  function setSpecies(species, btn) {
+    selectedSpecies = species;
+    btn.parentElement.querySelectorAll('.btn-chip').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    speciesCustom.style.display = (species === 'custom') ? 'block' : 'none';
+
+    if (!priceSterManuallyEdited && SPECIES_PRICES[species] !== undefined) {
+      priceSter.value = SPECIES_PRICES[species].toFixed(2);
+    }
+
+    updateAutoBundleName();
+    calculateLive();
+  }
+
+  function getSpeciesLabel() {
+    if (selectedSpecies === 'custom') {
+      return speciesCustom.value.trim() || 'Holz';
+    }
+    return selectedSpecies;
+  }
+
+  function formatLenLabel(cm) {
+    if (cm % 100 === 0) return (cm / 100) + 'm';
+    if (cm % 10 === 0) return (cm / 100).toString().replace('.', ',') + 'm';
+    return cm + 'cm';
+  }
+
+  function buildAutoBundleName() {
+    const v = getCalculatedValues();
+    const lenLabel = formatLenLabel(parseInt(lenInput.value) || 100);
+    const sterLabel = v.singleSter.toFixed(2).replace('.', ',');
+    return `Bündel ${sterLabel} Ster, ${getSpeciesLabel()} ${lenLabel} lang`;
+  }
+
+  // Bezeichnung nachführen, solange der Mensch noch nichts Eigenes eingetragen hat
+  function updateAutoBundleName() {
+    if (!bundleNameManuallyEdited) {
+      bundleName.value = buildAutoBundleName();
+    }
+  }
+
+  function setStrapsEnabled(enabled) {
+    strapsEnabled = enabled;
+    document.getElementById('strapsOnBtn').classList.toggle('active', enabled);
+    document.getElementById('strapsOffBtn').classList.toggle('active', !enabled);
+    strapsPerBundle.disabled = !enabled;
+    priceStrap.disabled = !enabled;
+    calculateLive();
+  }
+
+  function setPreset(dia, len, btn) {
+    diaInput.value = dia;
+    diaRange.value = dia;
+    lenInput.value = len;
+    if (btn) {
+      btn.parentElement.querySelectorAll('.btn-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+    calculateLive();
+  }
+
+  function getCalculatedValues() {
+    const d = parseFloat(diaInput.value) / 100; // in m
+    const l = parseFloat(lenInput.value) / 100; // in m
+    const qty = parseInt(qtyInput.value) || 1;
+    const compPct = Math.min(10, Math.max(0, parseFloat(compInput.value) || 0));
+    const pSter = parseFloat(priceSter.value) || 0;
+    const sCount = strapsEnabled ? (parseInt(strapsPerBundle.value) || 0) : 0;
+    const pStrap = parseFloat(priceStrap.value) || 0;
+
+    const singleSter = (Math.PI * Math.pow(d, 2) / 4) * l;
+    const totalSterRaw = singleSter * qty; // rein geometrisches Volumen des Gestells
+    const compressionFactor = 1 + (compPct / 100);
+    const totalSter = totalSterRaw * compressionFactor; // für Menge & Preis angesetztes Volumen (Bündel ist dichter gepackt)
+    const totalSrm = totalSter * 1.45;
+    const totalFm = totalSter * 0.70;
+
+    const totalStraps = sCount * qty;
+    const strapCost = totalStraps * pStrap;
+    const woodCost = totalSter * pSter;
+    const totalCost = woodCost + strapCost;
+
+    return {
+      dCm: diaInput.value,
+      lCm: lenInput.value,
+      qty,
+      compPct,
+      singleSter,
+      totalSterRaw,
+      totalSter,
+      totalSrm,
+      totalFm,
+      totalStraps,
+      sCount,
+      strapsEnabled,
+      pStrap,
+      pSter,
+      woodCost,
+      strapCost,
+      totalCost,
+      species: selectedSpecies,
+      speciesCustomText: speciesCustom.value
+    };
+  }
+
+  function calculateLive() {
+    const v = getCalculatedValues();
+    document.getElementById('resSterRaw').innerText = `${v.totalSterRaw.toFixed(2)} Ster`;
+    document.getElementById('resSter').innerText = `${v.totalSter.toFixed(2)} Ster`;
+    document.getElementById('resSrm').innerText = `${v.totalSrm.toFixed(2)} SRM`;
+    document.getElementById('resFm').innerText = `${v.totalFm.toFixed(2)} FM`;
+    document.getElementById('resStraps').innerText = `${v.totalStraps} Stk. (${v.strapCost.toFixed(2)} €)`;
+    document.getElementById('resTotal').innerText = `${v.totalCost.toFixed(2)} €`;
+    generateWoodBundleSvg();
+    updateAutoBundleName();
+  }
+
+  function addCurrentBundle() {
+    const v = getCalculatedValues();
+    const name = bundleName.value.trim() || buildAutoBundleName();
+
+    measurements.push({
+      id: Date.now(),
+      name,
+      ...v
+    });
+
+    bundleNameManuallyEdited = false;
+    priceSterManuallyEdited = false;
+    updateAutoBundleName();
+    renderTable();
+  }
+
+  function removeBundle(id) {
+    measurements = measurements.filter(m => m.id !== id);
+    renderTable();
+  }
+
+  function editBundle(id) {
+    const m = measurements.find(x => x.id === id);
+    if (!m) return;
+
+    // Werte des Postens zurück ins Formular laden
+    bundleName.value = m.name;
+    bundleNameManuallyEdited = true; // gespeicherte Bezeichnung beim Bearbeiten nicht automatisch überschreiben
+    diaInput.value = m.dCm;
+    diaRange.value = m.dCm;
+    lenInput.value = m.lCm;
+    qtyInput.value = m.qty;
+    compInput.value = m.compPct;
+    compRange.value = m.compPct;
+    priceSter.value = m.pSter;
+    priceSterManuallyEdited = true; // gespeicherten Preis beim Bearbeiten nicht automatisch überschreiben
+    strapsPerBundle.value = m.sCount;
+    priceStrap.value = m.pStrap;
+    setStrapsEnabled(m.strapsEnabled);
+
+    // Holzart-Auswahl wiederherstellen
+    selectedSpecies = m.species || 'Fichte';
+    document.querySelectorAll('.species-chip').forEach(b => b.classList.toggle('active', b.dataset.species === selectedSpecies));
+    speciesCustom.style.display = (selectedSpecies === 'custom') ? 'block' : 'none';
+    if (selectedSpecies === 'custom') speciesCustom.value = m.speciesCustomText || '';
+
+    // Posten aus der Liste entfernen, damit er per "Hinzufügen" aktualisiert wieder eingetragen wird
+    measurements = measurements.filter(x => x.id !== id);
+    renderTable();
+    calculateLive();
+    bundleName.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    bundleName.focus();
+  }
+
+  function clearList() {
+    measurements = [];
+    renderTable();
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
+
+    let sumB = 0, sumSt = 0, sumSr = 0, sumStr = 0, sumWCost = 0, sumSCost = 0, sumTCost = 0;
+
+    measurements.forEach((m, idx) => {
+      sumB += m.qty;
+      sumSt += m.totalSter;
+      sumSr += m.totalSrm;
+      sumStr += m.totalStraps;
+      sumWCost += m.woodCost;
+      sumSCost += m.strapCost;
+      sumTCost += m.totalCost;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${idx + 1}</td>
+        <td><strong>${m.name}</strong></td>
+        <td>Ø ${m.dCm} × ${m.lCm} cm</td>
+        <td>${m.qty}</td>
+        <td>${m.compPct}%</td>
+        <td>${m.totalSter.toFixed(2)}</td>
+        <td>${m.totalSrm.toFixed(2)}</td>
+        <td>${m.totalStraps} Stk.</td>
+        <td>${m.woodCost.toFixed(2)} €</td>
+        <td>${m.strapCost.toFixed(2)} €</td>
+        <td><strong>${m.totalCost.toFixed(2)} €</strong></td>
+        <td class="no-print">
+          <button class="btn-secondary" style="padding: 4px 8px; font-size: 0.8rem;" onclick="editBundle(${m.id})">✎</button>
+          <button class="btn-danger" onclick="removeBundle(${m.id})">✕</button>
+        </td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    document.getElementById('sumBundles').innerText = sumB;
+    document.getElementById('sumSter').innerText = sumSt.toFixed(2) + ' Ster';
+    document.getElementById('sumSrm').innerText = sumSr.toFixed(2) + ' SRM';
+    document.getElementById('sumStraps').innerText = sumStr + ' Stk.';
+    document.getElementById('sumWoodCost').innerText = sumWCost.toFixed(2) + ' €';
+    document.getElementById('sumStrapCost').innerText = sumSCost.toFixed(2) + ' €';
+    document.getElementById('sumTotalCost').innerText = sumTCost.toFixed(2) + ' €';
+  }
+
+  // Generierung der sauberen, nicht-überlappenden Scheitholz-Packung (<10% Rundlinge)
+  function generateWoodBundleSvg() {
+    const svg = document.getElementById('woodSvg');
+    const cx = 100, cy = 100, R = 85;
+
+    let html = `
+      <defs>
+        <radialGradient id="logGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fef3c7" />
+          <stop offset="85%" stop-color="#d97706" />
+          <stop offset="100%" stop-color="#78350f" />
+        </radialGradient>
+      </defs>
+
+      <!-- Äußerer Bündelring (Gestell) -->
+      <circle cx="${cx}" cy="${cy}" r="${R + 3}" fill="#27272a" stroke="#52525b" stroke-width="4" />
+      <circle cx="${cx}" cy="${cy}" r="${R}" fill="#1c1917" />
+    `;
+
+    // Ringe / Schichten definieren
+    const rings = [
+      { rIn: 0,  rOut: 24, count: 5,  isSplit: true },
+      { rIn: 25, rOut: 50, count: 11, isSplit: true },
+      { rIn: 51, rOut: 72, count: 17, isSplit: true },
+      { rIn: 73, rOut: 84, count: 22, isSplit: true }
+    ];
+
+    let pieceIndex = 0;
+    rings.forEach(ring => {
+      const angleStep = (Math.PI * 2) / ring.count;
+      for (let i = 0; i < ring.count; i++) {
+        pieceIndex++;
+        const isRound = (pieceIndex % 11 === 0); // Exakt < 10% Rundhölzer
+
+        const a1 = i * angleStep + 0.04;
+        const a2 = (i + 1) * angleStep - 0.04;
+        const midA = (a1 + a2) / 2;
+        const midR = (ring.rIn + ring.rOut) / 2;
+
+        if (isRound && ring.rIn > 0) {
+          // Kleiner Rundling in der Fuge
+          const rcx = cx + midR * Math.cos(midA);
+          const rcy = cy + midR * Math.sin(midA);
+          const logRadius = (ring.rOut - ring.rIn) * 0.38;
+          html += `<circle cx="${rcx}" cy="${rcy}" r="${logRadius}" fill="url(#logGrad)" stroke="#451a03" stroke-width="1.2" />`;
+          html += `<circle cx="${rcx}" cy="${rcy}" r="${logRadius * 0.4}" fill="none" stroke="#b45309" stroke-width="0.7" opacity="0.6" />`;
+        } else {
+          // Gespaltenes Scheitholz (Polygone/Keile ohne Überlappung)
+          const p1x = cx + ring.rIn * Math.cos(a1);
+          const p1y = cy + ring.rIn * Math.sin(a1);
+          const p2x = cx + ring.rOut * Math.cos(a1);
+          const p2y = cy + ring.rOut * Math.sin(a1);
+          const p3x = cx + ring.rOut * Math.cos(a2);
+          const p3y = cy + ring.rOut * Math.sin(a2);
+          const p4x = cx + ring.rIn * Math.cos(a2);
+          const p4y = cy + ring.rIn * Math.sin(a2);
+
+          const fillCol = (pieceIndex % 2 === 0) ? '#fde68a' : '#f59e0b';
+          html += `
+            <polygon points="${p1x.toFixed(1)},${p1y.toFixed(1)} ${p2x.toFixed(1)},${p2y.toFixed(1)} ${p3x.toFixed(1)},${p3y.toFixed(1)} ${p4x.toFixed(1)},${p4y.toFixed(1)}" 
+                     fill="${fillCol}" stroke="#451a03" stroke-width="1.2" />
+          `;
+          
+          // Strukturline (Holzmaserung / Spalt)
+          const spX = cx + (ring.rIn + 4) * Math.cos(midA);
+          const spY = cy + (ring.rIn + 4) * Math.sin(midA);
+          const epX = cx + (ring.rOut - 4) * Math.cos(midA);
+          const epY = cy + (ring.rOut - 4) * Math.sin(midA);
+          html += `<line x1="${spX.toFixed(1)}" y1="${spY.toFixed(1)}" x2="${epX.toFixed(1)}" y2="${epY.toFixed(1)}" stroke="#92400e" stroke-width="0.8" opacity="0.7" />`;
+        }
+      }
+    });
+
+    // Spanngurte, die rund um das Bündel laufen – nur zeichnen, wenn tatsächlich welche verwendet werden
+    const sCountPreview = strapsEnabled ? (parseInt(strapsPerBundle.value) || 0) : 0;
+    const strap1R = R + 4;
+    const strap2R = R + 9;
+
+    if (sCountPreview >= 1) {
+      html += `
+        <!-- Spanngurt 1 (innen, grau) -->
+        <circle cx="${cx}" cy="${cy}" r="${strap1R}" fill="none" stroke="#6b7280" stroke-width="5" opacity="0.95" />
+        <rect x="${cx - 7}" y="${cy - strap1R - 4}" width="14" height="8" fill="#3f3f46" stroke="#d4d4d8" stroke-width="1" rx="1"/>
+      `;
+    }
+
+    if (sCountPreview >= 2) {
+      html += `
+        <!-- Spanngurt 2 (außen, dünn, orange) -->
+        <circle cx="${cx}" cy="${cy}" r="${strap2R}" fill="none" stroke="#f97316" stroke-width="2" opacity="0.95" />
+        <rect x="${cx - 7}" y="${cy + strap2R - 4}" width="14" height="8" fill="#7c2d12" stroke="#fed7aa" stroke-width="1" rx="1"/>
+      `;
+    }
+
+    svg.innerHTML = html;
+  }
+
+  // Hell-/Dunkelmodus (Standard: hell, besser ablesbar bei Tageslicht/im Freien)
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    const btn = document.getElementById('themeToggle');
+    if (btn) btn.textContent = theme === 'dark' ? '☀️ Hell' : '🌙 Dunkel';
+    localStorage.setItem('buendel-theme', theme);
+  }
+
+  function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  }
+
+  // PDF-Export der Stückliste über den nativen Druckdialog ("Als PDF speichern")
+  function exportPdf() {
+    if (measurements.length === 0) {
+      alert('Die Polterliste ist leer. Bitte zuerst mindestens ein Bündel hinzufügen.');
+      return;
+    }
+    const now = new Date();
+    document.getElementById('printDate').innerText =
+      `Erstellt am ${now.toLocaleDateString('de-DE')} um ${now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
+    window.print();
+  }
+
+  // Initiale Ausführung
+  applyTheme(localStorage.getItem('buendel-theme') || 'light');
+  calculateLive();
+</script>
+
+</body>
+</html>
